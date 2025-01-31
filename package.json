@@ -14,8 +14,8 @@
   "contributes": {
     "commands": [
       {
-        "command": "offline-ai.helloWorld",
-        "title": "Hello World"
+        "command": "offline-chat.start",
+        "title": "Start offline chat"
       }
     ]
   },

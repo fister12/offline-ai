@@ -1,40 +1,48 @@
-
 import * as vscode from 'vscode';
 import ollama from 'ollama';
 
-export function activate(context: vscode.ExtensionContext){
-	const disposable = vscode.commands.registerCommand('offline-chat.start', () => {
-		const panel = vscode.window.createWebviewPanel(
-			'chat- Ollama',
-			'Ollma chat',
-			vscode.ViewColumn.One,
-			{enableScripts: true}
-		);
-		panel.webview.html = getWebViewContent();
+export function activate(context: vscode.ExtensionContext) {
+    const disposable = vscode.commands.registerCommand('offline-chat.start', () => {
+        const panel = vscode.window.createWebviewPanel(
+            'chat-Ollama',
+            'Ollama Chat',
+            vscode.ViewColumn.One,
+            { enableScripts: true }
+        );
+        panel.webview.html = getWebViewContent();
 
-		panel.webview.onDidReceiveMessage(async (message:any)=>{
-			if(message.command == 'ask'){
-				const userPrompt = message.text;
-				let response ='';
+        panel.webview.onDidReceiveMessage(async (message: any) => {
+            if (message.command === 'ask') {
+                const userPrompt = message.text;
+                let response = '';
 
-				try{
-					const streamResponse = await ollama.chat({
-						model: 'llama3.2',
-						messages:[{role: 'user', content: userPrompt}],
-						stream: true
-					})
+                try {
+                    const streamResponse = await ollama.chat({
+                        model: 'llama3.2',  // Make sure this matches your installed model
+                        messages: [{ role: 'user', content: userPrompt }],
+                        stream: true
+                    });
 
-					for await (const part of streamResponse){
-						
-							response += message.content;
-							panel.webview.postMessage({command:'response', text: response});
-						
-					}
-				}catch(err){}
-			}
-		});
+                    for await (const part of streamResponse) {
+                        if (part.message?.content) {
+                            response += part.message.content;
+                            panel.webview.postMessage({
+                                command: 'response',
+                                text: response
+                            });
+                        }
+                    }
+                } catch (err) {
+                    panel.webview.postMessage({
+                        command: 'response',
+                        text: 'Error: ' + (err instanceof Error ? err.message : String(err))
+                    });
+                }
+            }
+        });
+    });
 
-	});
+    context.subscriptions.push(disposable);
 }
 
 
@@ -60,7 +68,9 @@ function getWebViewContent(): string {
 		<div id="chat-container">
 		  <textarea id="prompt" placeholder="Type your message..."></textarea>
 		  <button id="askBtn">Send</button>
-		  <div id="response"></div>
+		  <div id="response">
+		 <textBox id = "response-box"></textBox> 
+		  </div>
 		</div>
 		<script>
 		  const vscode = acquireVsCodeApi();
@@ -76,7 +86,7 @@ function getWebViewContent(): string {
 		  window.addEventListener('message', event => {
 			const { command, text } = event.data;
 			if (command === 'response') {
-			  document.getElementById('response').innerHTML += \`<p><strong>Response:</strong> \${text}</p>\`;
+			  document.getElementById('response-box').innerText = text;
 			}
 		  });
 		</script>

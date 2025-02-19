@@ -10,7 +10,7 @@ This is the README for the "Offline AI Chat" extension. This extension allows yo
 
 ![Chat Interface](images/chat-interface.png)
 
-> Tip: Use animations to showcase your extension's features effectively.
+
 
 ## Requirements
 
